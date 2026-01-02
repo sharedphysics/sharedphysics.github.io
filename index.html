@@ -1,6 +1,1981 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Bookshelf</title>
+    <style>
+        :root {
+            --shelf-wood: #8B4513;
+            --shelf-shadow: #5d2d0f;
+            --background: #f5f1e8;
+            --text-primary: #2c1810;
+            --text-secondary: #6b5d54;
+            --modal-bg: rgba(255, 255, 255, 0.98);
+            --accent: #d4a574;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: #fafafa;
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #1a1a1a;
+        }
+
+        .bookshelf-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .bookshelf-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .bookshelf-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 32px;
+            color: #1a1a1a;
+        }
+
+        .metrics-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #666;
+            text-align: center;
+        }
+
+        .library-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #666;
+            text-align: center;
+            margin: 32px 0 24px;
+        }
+
+        .library-controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            max-width: 1200px;
+            margin: 0 auto 32px;
+            padding: 0 20px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #666;
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 4px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            background: #fff;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .toggle-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .toggle-btn.active {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .control-select {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .control-select:hover {
+            border-color: #999;
+        }
+
+        .control-select:focus {
+            outline: none;
+            border-color: #1a1a1a;
+        }
+
+        .bookshelf-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            padding: 24px;
+        }
+
+        .grid-book-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .grid-book-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .grid-book-cover {
+            width: 100%;
+            max-width: 180px;
+            height: 235px;
+            object-fit: contain;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .grid-book-cover-placeholder {
+            width: 100%;
+            max-width: 180px;
+            height: 235px;
+            background: #d3d3d3;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .grid-placeholder-text {
+            font-size: 0.85rem;
+            color: #666;
+            text-align: center;
+            padding: 16px;
+        }
+
+        .grid-book-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            line-height: 1.3;
+        }
+
+        .grid-book-author {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .metrics-section {
+            max-width: 1200px;
+            margin: 0 auto 48px;
+            background: white;
+            padding: 32px;
+            position: relative;
+        }
+
+        .metrics-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0,0,0,0.02) 1px, rgba(0,0,0,0.02) 2px),
+                repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(0,0,0,0.02) 1px, rgba(0,0,0,0.02) 2px);
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .metrics-counts {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+            margin-bottom: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .metric-card {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #666;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            line-height: 1;
+            color: #1a1a1a;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            margin-top: 16px;
+        }
+
+        .chart {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .chart-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #666;
+        }
+
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 200px;
+            padding-bottom: 60px;
+            position: relative;
+        }
+
+        .bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            position: relative;
+            justify-content: flex-end;
+        }
+
+        .bar {
+            width: 100%;
+            background: #1a1a1a;
+            position: relative;
+            transition: all 0.3s ease;
+            min-height: 2px;
+        }
+
+        .bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px);
+        }
+
+        .bar-label {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-45deg);
+            transform-origin: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            white-space: nowrap;
+            text-align: left;
+        }
+
+        .bar-count {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .line-chart {
+            position: relative;
+            height: 200px;
+            padding: 20px 0;
+        }
+
+        .line-chart-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .extremes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            margin-top: 32px;
+            align-items: center;
+            justify-items: center;
+        }
+
+        .extreme-book {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .isometric-book {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .book-spine-iso {
+            position: relative;
+            left: 90px;
+            top: 70px;
+            transform: scale(0.9);
+        }
+
+        /* Top panel - black cover */
+        .isometric-cube-top {
+            width: 180px;
+            height: 130px;
+            background: #1a1a1a;
+            transform-origin: 0 0;
+            box-shadow: 8px 6px 0px 5px #000;
+            transform: rotate(210deg) skewX(-30deg) scaleY(0.864);
+            z-index: 99;
+        }
+
+        /* Right panel - white pages with texture */
+        .isometric-cube-right {
+            position: absolute;
+            height: var(--page-height, 130px);
+            width: 130px;
+            background:
+                repeating-linear-gradient(
+                    0deg,
+                    #f9f9f9 0px,
+                    #f5f5f5 1px,
+                    #f0f0f0 2px,
+                    #f5f5f5 3px
+                ),
+                #fff;
+            transform-origin: 0 0;
+            box-shadow: 4px -2px 0px 2px #000;
+            border-bottom: 10px solid #000;
+            transform: rotate(-30deg) skewX(-30deg) translate(0, -113px) scaleY(0.864);
+            z-index: 98;
+        }
+
+        /* Left panel - white pages with texture */
+        .isometric-cube-left {
+            position: absolute;
+            width: var(--page-height, 130px);
+            height: 180px;
+            transform-origin: 0 0;
+            background:
+                repeating-linear-gradient(
+                    90deg,
+                    #f9f9f9 0px,
+                    #f5f5f5 1px,
+                    #f0f0f0 2px,
+                    #f5f5f5 3px
+                ),
+                #fff;
+            border-right: 10px solid #000;
+            transform: rotate(90deg) skewX(-30deg) scaleY(0.864) translate(-130.5px, 0);
+            z-index: 97;
+        }
+
+
+        .extreme-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #666;
+            text-align: center;
+        }
+
+        .extreme-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            text-align: center;
+        }
+
+        .extreme-meta {
+            font-size: 0.75rem;
+            color: #666;
+            text-align: center;
+        }
+
+        .recommended-list {
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .recommended-item {
+            padding: 12px 16px;
+            background: rgba(0,0,0,0.02);
+            border-left: 3px solid #1a1a1a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .recommended-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .recommended-author {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .pie-chart-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .pie-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .pie-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+
+        .pie-legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: 48px;
+            padding: 24px 0;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-section {
+                padding: 24px 16px;
+            }
+
+            .metric-value {
+                font-size: 2.5rem;
+            }
+
+            .extremes-grid {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+
+            .library-controls {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 1rem;
+            color: #999;
+            font-weight: 400;
+        }
+
+        .shelf-section {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .shelf-label {
+            display: none;
+        }
+
+        .shelf {
+            background: transparent;
+            padding: 0;
+        }
+
+        .books-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            align-items: center;
+        }
+
+        .book {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            max-width: 700px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            margin-bottom: 1px;
+            background: white;
+        }
+
+        .book:hover {
+            transform: translateX(calc(var(--offset) + 4px));
+            box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+            z-index: 10;
+        }
+
+        .book-cover-thumb {
+            height: 100%;
+            width: auto;
+            object-fit: cover;
+            border-radius: 2px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            margin: 4px;
+        }
+
+        .book-cover-placeholder {
+            height: 100%;
+            width: auto;
+            aspect-ratio: 2/3;
+            background: #e5e5e5;
+            border-radius: 2px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            margin: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-align: center;
+            color: #999;
+            line-height: 1.2;
+            overflow: hidden;
+        }
+
+        .book-spine {
+            flex: 1;
+            min-height: 60px;
+            padding: 12px 20px 12px 8px;
+            border-radius: 0;
+            border: 1px solid rgba(0,0,0,0.08);
+            font-size: 1rem;
+            text-align: left;
+            overflow: hidden;
+            color: #2c2c2c;
+            position: relative;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .book-spine::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.75);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .book-spine > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .book-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .book-title {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            font-weight: 600;
+            font-size: 1.5rem;
+            line-height: 1.3;
+            color: #1a1a1a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: -0.01em;
+        }
+
+        .book-meta {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-weight: 400;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-style: italic;
+        }
+
+        .book-type-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.3;
+            flex-shrink: 0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: var(--modal-bg);
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            position: relative;
+            padding: 40px;
+            background: linear-gradient(135deg, var(--accent) 0%, #c49563 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .modal-header h2 {
+            margin: 0 0 10px 0;
+            font-size: 2rem;
+            font-weight: 400;
+        }
+
+        .modal-header .author {
+            font-size: 1.3rem;
+            color: rgba(255,255,255,0.9);
+            margin: 0;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: white;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-modal:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 40px;
+        }
+
+        .book-detail-grid {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 40px;
+        }
+
+        .book-cover-large {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .book-info-column {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .book-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .meta-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .meta-value {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .rating {
+            color: #f39c12;
+            font-size: 1.5rem;
+        }
+
+        .recommended-badge {
+            display: inline-block;
+            background: #27ae60;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .book-thoughts {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .thoughts-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .thoughts-content {
+            line-height: 1.6;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .book-detail-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .bookshelf-header h1 {
+                font-size: 2.5rem;
+            }
+
+            .modal-header, .modal-body {
+                padding: 30px 20px;
+            }
+
+            .book-cover-large {
+                max-width: 200px;
+                margin: 0 auto;
+            }
+        }
+    </style>
+</head>
 <body>
-<p>r@sharedphysics.com</p>
+    <div class="bookshelf-container">
+        <div class="bookshelf-header">
+            <h1>My Library</h1>
+            <div class="metrics-title">Reading in Data</div>
+            <div id="metrics" class="metrics-section"></div>
+        </div>
+
+        <div class="library-title">The Library</div>
+
+        <div class="library-controls">
+            <div class="control-group">
+                <label class="control-label">Filter</label>
+                <div class="toggle-group">
+                    <button class="toggle-btn active" data-filter="all">All</button>
+                    <button class="toggle-btn" data-filter="recommended">Recommended</button>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">View</label>
+                <div class="toggle-group">
+                    <button class="toggle-btn" data-view="stack">Stack</button>
+                    <button class="toggle-btn active" data-view="grid">Grid</button>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Year Read</label>
+                <select id="yearFilter" class="control-select">
+                    <option value="">All Years</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Genre</label>
+                <select id="genreFilter" class="control-select">
+                    <option value="">All Genres</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="bookshelf" class="loading">Loading your bookshelf...</div>
+
+        <div class="footer">Created with 'Bookshelf' by Recommended.Systems</div>
+    </div>
+
+    <div class="modal" id="bookModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="close-modal" id="closeModal">×</button>
+                <div id="modalHeader"></div>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - UPDATE THIS WITH YOUR PUBLISHED GOOGLE SHEET URL
+        const CONFIG = {
+            publishedUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRdrakOGAU-i8wluqmqjoQYUWjRMkv3e4WtCQPhWDogEvUE6sr-uqC_JXPKqpZqLqi636VeJ4eZ3slT/pub?output=csv'
+        };
+
+        class BookshelfWidget {
+            constructor() {
+                this.books = [];
+                this.filteredBooks = [];
+                this.currentFilter = 'all';
+                this.currentYear = '';
+                this.currentGenre = '';
+                this.currentView = 'grid';
+                this.init();
+            }
+
+            async init() {
+                await this.loadBooks();
+                this.renderMetrics();
+                this.setupEventListeners();
+                this.populateFilters();
+                this.renderBookshelf();
+            }
+
+            async loadBooks() {
+                try {
+                    const url = CONFIG.publishedUrl;
+                    const response = await fetch(url);
+                    const csvText = await response.text();
+
+                    this.books = await this.parseCSV(csvText);
+                    this.filteredBooks = [...this.books];
+                } catch (error) {
+                    console.error('Error loading books:', error);
+                    document.getElementById('bookshelf').innerHTML = '<p>Error loading bookshelf. Please check the Google Sheet permissions.</p>';
+                }
+            }
+
+            async parseCSV(csv) {
+                const lines = csv.split('\n');
+                const books = [];
+
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue;
+
+                    const values = this.parseCSVLine(lines[i]);
+                    if (values.length < 2 || !values[1]) continue;
+
+                    const book = {
+                        recommended: values[0]?.toLowerCase() === 'yes' || values[0]?.toLowerCase() === 'y' || values[0]?.includes('⭐') || values[0]?.includes('*'),
+                        title: values[1],
+                        author: values[2] || 'Unknown Author',
+                        publishedYear: parseInt(values[3]) || null,
+                        type: values[4] || '',
+                        yearRead: values[5] || '',
+                        genre: values[6] || 'Uncategorized',
+                        subGenre: values[7] || '',
+                        pageCount: parseInt(values[8]) || 250,
+                        rating: values[9] || '',
+                        thoughts: values[10] || '',
+                        coverUrl: values[11] || '',
+                        spineGradient: this.generateSpineGradient(values[1] + (values[2] || ''))
+                    };
+
+                    books.push(book);
+                }
+
+                return books;
+            }
+
+            parseCSVLine(line) {
+                const values = [];
+                let current = '';
+                let inQuotes = false;
+
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    
+                    if (char === '"') {
+                        if (inQuotes && line[i + 1] === '"') {
+                            current += '"';
+                            i++;
+                        } else {
+                            inQuotes = !inQuotes;
+                        }
+                    } else if (char === ',' && !inQuotes) {
+                        values.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                
+                values.push(current.trim());
+                return values;
+            }
+
+            async enrichBookDataForModal(book) {
+                // Only called when opening modal - fetches cover image on-demand
+                if (book.coverUrl) return; // Already have cover data
+
+                try {
+                    const searchUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}&limit=1`;
+                    const response = await fetch(searchUrl);
+                    const data = await response.json();
+
+                    if (data.docs && data.docs.length > 0) {
+                        const bookData = data.docs[0];
+
+                        if (bookData.cover_i) {
+                            book.coverUrl = `https://covers.openlibrary.org/b/id/${bookData.cover_i}-L.jpg`;
+                        }
+
+                        // Update published year if missing
+                        if (!book.publishedYear && bookData.first_publish_year) {
+                            book.publishedYear = bookData.first_publish_year;
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error fetching cover for "${book.title}":`, error);
+                }
+
+                // Fallback to placeholder if no cover found
+                if (!book.coverUrl) {
+                    book.coverUrl = this.generatePlaceholderCover(book.title);
+                }
+            }
+
+            generatePlaceholderCover(title) {
+                const color = this.generateSpineColor(title);
+                return `data:image/svg+xml,${encodeURIComponent(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="300">
+                        <rect width="200" height="300" fill="${color}"/>
+                        <text x="50%" y="50%" text-anchor="middle" fill="white" font-size="20" font-family="serif">
+                            ${title.substring(0, 20)}
+                        </text>
+                    </svg>
+                `)}`;
+            }
+
+            generateSpineColor(text) {
+                let hash = 0;
+                for (let i = 0; i < text.length; i++) {
+                    hash = text.charCodeAt(i) + ((hash << 5) - hash);
+                }
+
+                const hue = Math.abs(hash % 360);
+                const saturation = 45 + (Math.abs(hash) % 30);
+                const lightness = 35 + (Math.abs(hash >> 8) % 20);
+
+                return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+            }
+
+            generateSpineGradient(text) {
+                let hash = 0;
+                for (let i = 0; i < text.length; i++) {
+                    hash = text.charCodeAt(i) + ((hash << 5) - hash);
+                }
+
+                // Generate muted grey/beige tones for fallback
+                const baseHues = [0, 30, 40, 200, 210, 220]; // Beiges, warm greys, cool greys
+                const hue = baseHues[Math.abs(hash) % baseHues.length];
+                const saturation = 3 + (Math.abs(hash) % 8); // Very low saturation (3-10%)
+                const lightness = 88 + (Math.abs(hash >> 8) % 8); // Light (88-95%)
+
+                const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                return color;
+            }
+
+            async extractDominantColors(imageUrl) {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.crossOrigin = 'Anonymous';
+
+                    img.onload = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+
+                            // Use small canvas for performance
+                            canvas.width = 100;
+                            canvas.height = 150;
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                            const pixels = imageData.data;
+
+                            // Color clustering - find dominant colors
+                            const colorCounts = {};
+                            for (let i = 0; i < pixels.length; i += 4 * 10) { // Sample every 10th pixel
+                                const r = Math.round(pixels[i] / 20) * 20;
+                                const g = Math.round(pixels[i + 1] / 20) * 20;
+                                const b = Math.round(pixels[i + 2] / 20) * 20;
+
+                                // Skip very light and very dark colors
+                                const brightness = (r + g + b) / 3;
+                                if (brightness < 30 || brightness > 225) continue;
+
+                                const key = `${r},${g},${b}`;
+                                colorCounts[key] = (colorCounts[key] || 0) + 1;
+                            }
+
+                            // Get top 2 colors
+                            const sortedColors = Object.entries(colorCounts)
+                                .sort((a, b) => b[1] - a[1])
+                                .slice(0, 2)
+                                .map(([rgb]) => {
+                                    const [r, g, b] = rgb.split(',').map(Number);
+                                    return this.rgbToHsl(r, g, b);
+                                });
+
+                            if (sortedColors.length >= 2) {
+                                // Set saturation to 80%
+                                const color1 = `hsl(${sortedColors[0].h}, 80%, ${sortedColors[0].l}%)`;
+                                const color2 = `hsl(${sortedColors[1].h}, 80%, ${sortedColors[1].l}%)`;
+                                resolve(`linear-gradient(135deg, ${color1}, ${color2})`);
+                            } else {
+                                resolve(null);
+                            }
+                        } catch (e) {
+                            resolve(null);
+                        }
+                    };
+
+                    img.onerror = () => resolve(null);
+                    img.src = imageUrl;
+                });
+            }
+
+            rgbToHsl(r, g, b) {
+                r /= 255;
+                g /= 255;
+                b /= 255;
+
+                const max = Math.max(r, g, b);
+                const min = Math.min(r, g, b);
+                let h, s, l = (max + min) / 2;
+
+                if (max === min) {
+                    h = s = 0;
+                } else {
+                    const d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+                    switch (max) {
+                        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                        case g: h = ((b - r) / d + 2) / 6; break;
+                        case b: h = ((r - g) / d + 4) / 6; break;
+                    }
+                }
+
+                return {
+                    h: Math.round(h * 360),
+                    s: Math.round(s * 100),
+                    l: Math.round(l * 100)
+                };
+            }
+
+            setupEventListeners() {
+                // Filter toggle buttons
+                document.querySelectorAll('[data-filter]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const group = e.target.closest('.toggle-group');
+                        group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.currentFilter = e.target.dataset.filter;
+                        this.applyFilters();
+                    });
+                });
+
+                // View toggle buttons
+                document.querySelectorAll('[data-view]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const group = e.target.closest('.toggle-group');
+                        group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.currentView = e.target.dataset.view;
+                        this.renderBookshelf();
+                    });
+                });
+
+                // Year filter dropdown
+                document.getElementById('yearFilter').addEventListener('change', (e) => {
+                    this.currentYear = e.target.value;
+                    this.applyFilters();
+                });
+
+                // Genre filter dropdown
+                document.getElementById('genreFilter').addEventListener('change', (e) => {
+                    this.currentGenre = e.target.value;
+                    this.applyFilters();
+                });
+
+                // Modal
+                document.getElementById('closeModal').addEventListener('click', () => {
+                    document.getElementById('bookModal').classList.remove('active');
+                });
+
+                document.getElementById('bookModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'bookModal') {
+                        document.getElementById('bookModal').classList.remove('active');
+                    }
+                });
+            }
+
+            populateFilters() {
+                // Populate year dropdown
+                const years = [...new Set(this.books.map(b => b.yearRead).filter(y => y))].sort().reverse();
+                const yearSelect = document.getElementById('yearFilter');
+                years.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    yearSelect.appendChild(option);
+                });
+
+                // Populate genre dropdown
+                const genres = [...new Set(this.books.map(b => b.genre).filter(g => g))].sort();
+                const genreSelect = document.getElementById('genreFilter');
+                genres.forEach(genre => {
+                    const option = document.createElement('option');
+                    option.value = genre;
+                    option.textContent = genre;
+                    genreSelect.appendChild(option);
+                });
+            }
+
+            applyFilters() {
+                this.filteredBooks = this.books.filter(book => {
+                    if (this.currentFilter === 'recommended' && !book.recommended) return false;
+                    if (this.currentYear && book.yearRead !== this.currentYear) return false;
+                    if (this.currentGenre && book.genre !== this.currentGenre) return false;
+                    return true;
+                });
+
+                this.renderBookshelf();
+            }
+
+            renderMetrics() {
+                const totalBooks = this.books.length;
+                const totalPages = this.books.reduce((sum, book) => sum + (book.pageCount || 0), 0);
+                const avgPages = totalBooks > 0 ? Math.round(totalPages / totalBooks) : 0;
+
+                // Calculate average publication age
+                const currentYear = new Date().getFullYear();
+                const booksWithYear = this.books.filter(b => b.publishedYear && !isNaN(b.publishedYear));
+                const avgAge = booksWithYear.length > 0
+                    ? Math.round(booksWithYear.reduce((sum, book) => sum + (currentYear - book.publishedYear), 0) / booksWithYear.length)
+                    : 0;
+
+                // Recommended rate
+                const recommendedCount = this.books.filter(b => b.recommended).length;
+                const recommendedRate = totalBooks > 0 ? Math.round((recommendedCount / totalBooks) * 100) : 0;
+
+                // Find extremes
+                const booksWithPages = this.books.filter(b => b.pageCount > 0);
+                const longest = booksWithPages.length > 0
+                    ? booksWithPages.reduce((max, book) => book.pageCount > max.pageCount ? book : max)
+                    : null;
+                const shortest = booksWithPages.length > 0
+                    ? booksWithPages.reduce((min, book) => book.pageCount < min.pageCount ? book : min)
+                    : null;
+
+                // Get recommended books
+                const recommendedBooks = this.books.filter(b => b.recommended);
+
+                // Count genres
+                const genreCounts = {};
+                this.books.forEach(book => {
+                    const genre = book.genre || 'Uncategorized';
+                    genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+                });
+
+                // Sort genres by count and take top 8
+                const topGenres = Object.entries(genreCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 8);
+
+                // Count subgenres
+                const subGenreCounts = {};
+                this.books.forEach(book => {
+                    if (book.subGenre && book.subGenre.trim()) {
+                        const subGenre = book.subGenre;
+                        subGenreCounts[subGenre] = (subGenreCounts[subGenre] || 0) + 1;
+                    }
+                });
+
+                // Sort subgenres by count and take top 8
+                const topSubGenres = Object.entries(subGenreCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 8);
+
+                // Count by type (digital, print, audio)
+                const typeCounts = {};
+                this.books.forEach(book => {
+                    const type = (book.type || 'Print').toLowerCase();
+                    let category;
+                    if (type.includes('digital') || type.includes('ebook')) {
+                        category = 'Digital';
+                    } else if (type.includes('audio')) {
+                        category = 'Audio';
+                    } else {
+                        category = 'Print';
+                    }
+                    typeCounts[category] = (typeCounts[category] || 0) + 1;
+                });
+
+                // Count by decade
+                const decadeCounts = {};
+                this.books.forEach(book => {
+                    if (book.publishedYear) {
+                        const decade = Math.floor(book.publishedYear / 10) * 10;
+                        decadeCounts[decade] = (decadeCounts[decade] || 0) + 1;
+                    }
+                });
+
+                // Sort decades
+                const decades = Object.entries(decadeCounts)
+                    .sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+
+                // Count by year read
+                const yearReadCounts = {};
+                this.books.forEach(book => {
+                    if (book.yearRead) {
+                        yearReadCounts[book.yearRead] = (yearReadCounts[book.yearRead] || 0) + 1;
+                    }
+                });
+
+                const yearsRead = Object.entries(yearReadCounts)
+                    .sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+
+                // Genre trends by year
+                const genresByYear = {};
+                this.books.forEach(book => {
+                    if (book.yearRead) {
+                        if (!genresByYear[book.yearRead]) {
+                            genresByYear[book.yearRead] = {};
+                        }
+                        const genre = book.genre || 'Uncategorized';
+                        genresByYear[book.yearRead][genre] = (genresByYear[book.yearRead][genre] || 0) + 1;
+                    }
+                });
+
+                const metricsContainer = document.getElementById('metrics');
+                const maxGenreCount = Math.max(...topGenres.map(g => g[1]));
+                const maxSubGenreCount = topSubGenres.length > 0 ? Math.max(...topSubGenres.map(g => g[1])) : 1;
+                const maxDecadeCount = Math.max(...decades.map(d => d[1]));
+                const maxYearCount = yearsRead.length > 0 ? Math.max(...yearsRead.map(y => y[1])) : 1;
+
+                metricsContainer.innerHTML = `
+                    <div class="metrics-counts">
+                        <div class="metric-card">
+                            <div class="metric-label">Total Books</div>
+                            <div class="metric-value">${totalBooks}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Total Pages Read</div>
+                            <div class="metric-value">${totalPages.toLocaleString()}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Avg Pages/Book</div>
+                            <div class="metric-value">${avgPages}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Avg Book Age</div>
+                            <div class="metric-value">${avgAge}yr</div>
+                        </div>
+                    </div>
+                    <div class="metrics-grid">
+                        <div class="chart-container">
+                            <div class="chart">
+                                <div class="chart-title">By Genre</div>
+                                <div class="bar-chart">
+                                    ${topGenres.map(([genre, count]) => `
+                                        <div class="bar-wrapper">
+                                            <div class="bar" style="height: ${(count / maxGenreCount) * 100}%;">
+                                                <div class="bar-count">${count}</div>
+                                            </div>
+                                            <div class="bar-label">${genre}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            ${topSubGenres.length > 0 ? `
+                                <div class="chart">
+                                    <div class="chart-title">By Sub-Genre</div>
+                                    <div class="bar-chart">
+                                        ${topSubGenres.map(([subGenre, count]) => `
+                                            <div class="bar-wrapper">
+                                                <div class="bar" style="height: ${(count / maxSubGenreCount) * 100}%;">
+                                                    <div class="bar-count">${count}</div>
+                                                </div>
+                                                <div class="bar-label">${subGenre}</div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="chart-container">
+                            ${Object.keys(typeCounts).length > 0 ? `
+                                <div class="chart">
+                                    <div class="chart-title">By Type</div>
+                                    <div class="pie-chart-container">
+                                        ${this.createPieChart(typeCounts, totalBooks)}
+                                        <div class="pie-legend">
+                                            ${Object.entries(typeCounts).map(([type, count]) => `
+                                                <div class="pie-legend-item">
+                                                    <div class="pie-legend-color" style="background: ${this.getTypeColor(type)};"></div>
+                                                    <div>${type}: ${count}</div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            <div class="chart">
+                                <div class="chart-title">By Decade Published</div>
+                                <div class="bar-chart">
+                                    ${decades.map(([decade, count]) => `
+                                        <div class="bar-wrapper">
+                                            <div class="bar" style="height: ${(count / maxDecadeCount) * 100}%;">
+                                                <div class="bar-count">${count}</div>
+                                            </div>
+                                            <div class="bar-label">${decade}s</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        ${yearsRead.length > 0 ? `
+                            <div class="chart-container">
+                                <div class="chart">
+                                    <div class="chart-title">Books Read Per Year</div>
+                                    <div class="bar-chart">
+                                        ${yearsRead.map(([year, count]) => `
+                                            <div class="bar-wrapper">
+                                                <div class="bar" style="height: ${(count / maxYearCount) * 100}%;">
+                                                    <div class="bar-count">${count}</div>
+                                                </div>
+                                                <div class="bar-label">${year}</div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <div class="chart">
+                                    <div class="chart-title">Genre Trends Over Time</div>
+                                    <canvas id="genre-trends-canvas" class="line-chart-canvas"></canvas>
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${longest && shortest ? `
+                            <div class="extremes-grid" style="grid-column: 1 / -1;">
+                                <div class="extreme-book">
+                                    <div class="isometric-book" style="--page-height: ${Math.max(30, (shortest.pageCount / longest.pageCount) * 130)}px;">
+                                        <div class="book-spine-iso">
+                                            <div class="isometric-cube-top"></div>
+                                            <div class="isometric-cube-right"></div>
+                                            <div class="isometric-cube-left"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="extreme-label">Shortest</div>
+                                        <div class="extreme-title">${shortest.title}</div>
+                                        <div class="extreme-meta">${shortest.author}</div>
+                                        <div class="extreme-meta">${shortest.pageCount.toLocaleString()} pages</div>
+                                    </div>
+                                </div>
+                                <div class="extreme-book">
+                                    <div class="isometric-book" style="--page-height: 130px;">
+                                        <div class="book-spine-iso">
+                                            <div class="isometric-cube-top"></div>
+                                            <div class="isometric-cube-right"></div>
+                                            <div class="isometric-cube-left"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="extreme-label">Longest</div>
+                                        <div class="extreme-title">${longest.title}</div>
+                                        <div class="extreme-meta">${longest.author}</div>
+                                        <div class="extreme-meta">${longest.pageCount.toLocaleString()} pages</div>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${recommendedBooks.length > 0 ? `
+                            <div class="chart" style="grid-column: 1 / -1;">
+                                <div class="chart-title">Recommended Reads</div>
+                                <div class="recommended-list">
+                                    ${recommendedBooks.slice(0, 5).map(book => `
+                                        <div class="recommended-item">
+                                            <div>
+                                                <div class="recommended-title">${book.title}</div>
+                                                <div class="recommended-author">${book.author}</div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                    ${recommendedBooks.length > 5 ? `<div class="extreme-meta" style="padding: 8px 16px;">...and ${recommendedBooks.length - 5} more</div>` : ''}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                // Draw genre trends line chart
+                if (yearsRead.length > 0) {
+                    this.drawGenreTrends(genresByYear, yearsRead.map(y => y[0]));
+                }
+            }
+
+            drawGenreTrends(genresByYear, years) {
+                const canvas = document.getElementById('genre-trends-canvas');
+                if (!canvas) return;
+
+                const ctx = canvas.getContext('2d');
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * window.devicePixelRatio;
+                canvas.height = rect.height * window.devicePixelRatio;
+                ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+                const width = rect.width;
+                const height = rect.height;
+                const padding = 40;
+
+                // Get top 5 genres across all years
+                const allGenres = {};
+                Object.values(genresByYear).forEach(yearGenres => {
+                    Object.entries(yearGenres).forEach(([genre, count]) => {
+                        allGenres[genre] = (allGenres[genre] || 0) + count;
+                    });
+                });
+                const topGenres = Object.entries(allGenres)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5)
+                    .map(g => g[0]);
+
+                // Find max count for scaling
+                let maxCount = 0;
+                years.forEach(year => {
+                    topGenres.forEach(genre => {
+                        const count = genresByYear[year]?.[genre] || 0;
+                        maxCount = Math.max(maxCount, count);
+                    });
+                });
+
+                const xStep = (width - padding * 2) / (years.length - 1 || 1);
+                const yScale = (height - padding * 2) / (maxCount || 1);
+
+                // Draw grid
+                ctx.strokeStyle = 'rgba(0,0,0,0.05)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i <= 5; i++) {
+                    const y = padding + (height - padding * 2) * (i / 5);
+                    ctx.beginPath();
+                    ctx.moveTo(padding, y);
+                    ctx.lineTo(width - padding, y);
+                    ctx.stroke();
+                }
+
+                // Draw lines for each genre
+                const colors = ['#1a1a1a', '#666', '#999', '#bbb', '#ddd'];
+                topGenres.forEach((genre, genreIndex) => {
+                    ctx.strokeStyle = colors[genreIndex];
+                    ctx.fillStyle = colors[genreIndex];
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+
+                    years.forEach((year, i) => {
+                        const count = genresByYear[year]?.[genre] || 0;
+                        const x = padding + i * xStep;
+                        const y = height - padding - (count * yScale);
+
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+
+                        // Draw point
+                        ctx.fillRect(x - 2, y - 2, 4, 4);
+                    });
+
+                    ctx.stroke();
+                });
+
+                // Draw labels
+                ctx.fillStyle = '#1a1a1a';
+                ctx.font = '10px monospace';
+                ctx.textAlign = 'center';
+                years.forEach((year, i) => {
+                    const x = padding + i * xStep;
+                    ctx.fillText(year, x, height - 10);
+                });
+
+                // Draw legend
+                ctx.textAlign = 'left';
+                topGenres.forEach((genre, i) => {
+                    const y = 15 + i * 15;
+                    ctx.fillStyle = colors[i];
+                    ctx.fillRect(10, y - 8, 12, 2);
+                    ctx.fillStyle = '#666';
+                    ctx.font = '10px sans-serif';
+                    ctx.fillText(genre, 25, y);
+                });
+            }
+
+            getTypeColor(type) {
+                const colors = {
+                    'Print': '#1a1a1a',
+                    'Digital': '#666',
+                    'Audio': '#999'
+                };
+                return colors[type] || '#ccc';
+            }
+
+            createPieChart(typeCounts, total) {
+                let currentAngle = 0;
+                const radius = 60;
+                const cx = 70;
+                const cy = 70;
+
+                const slices = Object.entries(typeCounts).map(([type, count]) => {
+                    const percentage = count / total;
+                    const angle = percentage * 360;
+                    const startAngle = currentAngle;
+                    const endAngle = currentAngle + angle;
+                    currentAngle = endAngle;
+
+                    const startRad = (startAngle - 90) * Math.PI / 180;
+                    const endRad = (endAngle - 90) * Math.PI / 180;
+
+                    const x1 = cx + radius * Math.cos(startRad);
+                    const y1 = cy + radius * Math.sin(startRad);
+                    const x2 = cx + radius * Math.cos(endRad);
+                    const y2 = cy + radius * Math.sin(endRad);
+
+                    const largeArc = angle > 180 ? 1 : 0;
+
+                    return `<path d="M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z"
+                            fill="${this.getTypeColor(type)}"
+                            stroke="#fff"
+                            stroke-width="2"/>`;
+                }).join('');
+
+                return `<svg viewBox="0 0 140 140" style="width: 140px; height: 140px;">${slices}</svg>`;
+            }
+
+            renderBookshelf() {
+                const container = document.getElementById('bookshelf');
+
+                if (this.filteredBooks.length === 0) {
+                    container.innerHTML = '<p class="loading">No books match your filters.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+
+                if (this.currentView === 'grid') {
+                    // Grid view
+                    const gridContainer = document.createElement('div');
+                    gridContainer.className = 'bookshelf-grid';
+
+                    this.filteredBooks.forEach(book => {
+                        gridContainer.appendChild(this.createGridBookElement(book));
+                    });
+
+                    container.appendChild(gridContainer);
+                } else {
+                    // Stack view
+                    const section = document.createElement('div');
+                    section.className = 'shelf-section';
+
+                    section.innerHTML = `
+                        <div class="shelf">
+                            <div class="books-row" id="books-stack"></div>
+                        </div>
+                    `;
+
+                    container.appendChild(section);
+
+                    const booksRow = section.querySelector('#books-stack');
+                    this.filteredBooks.forEach(book => {
+                        booksRow.appendChild(this.createBookElement(book));
+                    });
+                }
+            }
+
+            getBookTypeIcon(type) {
+                const typeNormalized = (type || 'print').toLowerCase();
+
+                if (typeNormalized.includes('digital') || typeNormalized.includes('ebook')) {
+                    return `<svg class="book-type-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="5" y="4" width="14" height="17" rx="2"/>
+                        <path d="M12 18h.01"/>
+                    </svg>`;
+                } else if (typeNormalized.includes('audio')) {
+                    return `<svg class="book-type-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18V5l12-2v13"/>
+                        <circle cx="6" cy="18" r="3"/>
+                        <circle cx="18" cy="16" r="3"/>
+                    </svg>`;
+                } else {
+                    // Print/default
+                    return `<svg class="book-type-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    </svg>`;
+                }
+            }
+
+            createBookElement(book) {
+                const bookDiv = document.createElement('div');
+                bookDiv.className = 'book';
+
+                // Calculate height based on page count (60px - 120px range)
+                const minHeight = 60;
+                const maxHeight = 120;
+                const height = Math.min(maxHeight, Math.max(minHeight, (book.pageCount || 300) * 0.25));
+
+                // Generate consistent hash from title for random variations
+                let hash = 0;
+                const titleStr = book.title + (book.author || '');
+                for (let i = 0; i < titleStr.length; i++) {
+                    hash = titleStr.charCodeAt(i) + ((hash << 5) - hash);
+                }
+
+                // Width variation: random ±10% (not based on height)
+                const widthRandom = (Math.abs(hash) % 200) / 1000; // 0 to 0.2
+                const widthVariation = 0.9 + widthRandom; // 0.9 to 1.1
+                const maxWidth = Math.floor(700 * widthVariation);
+
+                // Horizontal offset: ±6.5% for stacked look
+                const offsetRandom = (Math.abs(hash >> 8) % 131) / 1000; // 0 to 0.13
+                const offsetPercent = offsetRandom * 100 - 6.5; // -6.5 to +6.5
+
+                const authorYear = [];
+                if (book.author && book.author !== 'Unknown Author') {
+                    authorYear.push(book.author);
+                }
+                if (book.publishedYear) {
+                    authorYear.push(`${book.publishedYear}`);
+                }
+                const metadata = authorYear.length > 0 ? `<div class="book-meta">${authorYear.join(', ')}</div>` : '';
+
+                bookDiv.style.maxWidth = `${maxWidth}px`;
+                bookDiv.style.setProperty('--offset', `${offsetPercent}%`);
+                bookDiv.style.transform = `translateX(${offsetPercent}%)`;
+
+                // Use cover URL
+                const imageSrc = book.coverUrl;
+
+                // Determine spine background (will be updated with gradient later if cover exists)
+                const spineBackground = imageSrc ? book.spineGradient : '#d3d3d3';
+
+                // Create cover element (either image or placeholder)
+                const coverElement = imageSrc
+                    ? `<img class="book-cover-thumb" src="${imageSrc}" alt="${book.title}" style="height: ${height - 8}px;" data-book-id="${hash}">`
+                    : `<div class="book-cover-placeholder" style="height: ${height - 8}px;">
+                         <div>${book.title.substring(0, 30)}${book.title.length > 30 ? '...' : ''}</div>
+                       </div>`;
+
+                bookDiv.innerHTML = `
+                    <div class="book-spine" style="background: ${spineBackground}; min-height: ${height}px;" data-book-id="${hash}">
+                        ${coverElement}
+                        <div class="book-content">
+                            <div class="book-title">${book.title}</div>
+                            ${metadata}
+                        </div>
+                        ${this.getBookTypeIcon(book.type)}
+                    </div>
+                `;
+
+                bookDiv.addEventListener('click', () => this.showModal(book));
+
+                // Extract colors from cover and update gradient asynchronously
+                if (imageSrc) {
+                    this.extractDominantColors(imageSrc).then(gradient => {
+                        if (gradient) {
+                            const spine = bookDiv.querySelector(`[data-book-id="${hash}"]`);
+                            if (spine) {
+                                spine.style.background = gradient;
+                            }
+                        }
+                    });
+                }
+
+                return bookDiv;
+            }
+
+            createGridBookElement(book) {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'grid-book-card';
+
+                // Generate consistent hash from title for book ID
+                let hash = 0;
+                const titleStr = book.title + (book.author || '');
+                for (let i = 0; i < titleStr.length; i++) {
+                    hash = titleStr.charCodeAt(i) + ((hash << 5) - hash);
+                }
+
+                const authorWithYear = book.publishedYear
+                    ? `${book.author || 'Unknown Author'} (${book.publishedYear})`
+                    : (book.author || 'Unknown Author');
+
+                // Use cover URL, then placeholder
+                const imageSrc = book.coverUrl;
+                const coverElement = imageSrc
+                    ? `<img class="grid-book-cover" src="${imageSrc}" alt="${book.title}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                       <div class="grid-book-cover-placeholder" style="display:none;">
+                           <div class="grid-placeholder-text">${book.title.substring(0, 30)}${book.title.length > 30 ? '...' : ''}</div>
+                       </div>`
+                    : `<div class="grid-book-cover-placeholder">
+                           <div class="grid-placeholder-text">${book.title.substring(0, 30)}${book.title.length > 30 ? '...' : ''}</div>
+                       </div>`;
+
+                cardDiv.innerHTML = `
+                    ${coverElement}
+                    <div class="grid-book-title">${book.title}</div>
+                    <div class="grid-book-author">${authorWithYear}</div>
+                `;
+
+                cardDiv.addEventListener('click', () => this.showModal(book));
+
+                return cardDiv;
+            }
+
+            async showModal(book) {
+                const modal = document.getElementById('bookModal');
+                const header = document.getElementById('modalHeader');
+                const body = document.getElementById('modalBody');
+
+                // Show modal immediately with loading state
+                modal.classList.add('active');
+
+                header.innerHTML = `
+                    <h2>${book.title}</h2>
+                    <p class="author">${book.author}</p>
+                `;
+
+                body.innerHTML = '<div class="loading">Loading book details...</div>';
+
+                // Fetch cover image on-demand
+                await this.enrichBookDataForModal(book);
+
+                // Use cover URL
+                const imageSrc = book.coverUrl;
+
+                // Extract colors for modal header
+                if (imageSrc) {
+                    const gradient = await this.extractDominantColors(imageSrc);
+                    if (gradient) {
+                        const modalHeader = modal.querySelector('.modal-header');
+                        modalHeader.style.background = gradient;
+                    }
+                }
+
+                const stars = book.rating ? '⭐'.repeat(Math.floor(parseFloat(book.rating))) : '';
+
+                body.innerHTML = `
+                    <div class="book-detail-grid">
+                        <img src="${imageSrc}" alt="${book.title}" class="book-cover-large">
+                        <div class="book-info-column">
+                            <div class="book-meta">
+                                ${book.publishedYear ? `
+                                    <div class="meta-item">
+                                        <span class="meta-label">Published</span>
+                                        <span class="meta-value">${book.publishedYear}</span>
+                                    </div>
+                                ` : ''}
+                                ${book.yearRead ? `
+                                    <div class="meta-item">
+                                        <span class="meta-label">Read In</span>
+                                        <span class="meta-value">${book.yearRead}</span>
+                                    </div>
+                                ` : ''}
+                                ${book.genre ? `
+                                    <div class="meta-item">
+                                        <span class="meta-label">Genre</span>
+                                        <span class="meta-value">${book.genre}</span>
+                                    </div>
+                                ` : ''}
+                                ${book.subGenre ? `
+                                    <div class="meta-item">
+                                        <span class="meta-label">Sub-Genre</span>
+                                        <span class="meta-value">${book.subGenre}</span>
+                                    </div>
+                                ` : ''}
+                                ${book.pageCount ? `
+                                    <div class="meta-item">
+                                        <span class="meta-label">Pages</span>
+                                        <span class="meta-value">${book.pageCount}</span>
+                                    </div>
+                                ` : ''}
+                                ${book.type ? `
+                                    <div class="meta-item">
+                                        <span class="meta-label">Format</span>
+                                        <span class="meta-value">${book.type}</span>
+                                    </div>
+                                ` : ''}
+                                ${book.rating ? `
+                                    <div class="meta-item">
+                                        <span class="meta-label">Rating</span>
+                                        <div class="rating">${stars} ${book.rating}/5</div>
+                                    </div>
+                                ` : ''}
+                                ${book.recommended ? '<span class="recommended-badge">✓ Recommended</span>' : ''}
+                            </div>
+                            ${book.thoughts ? `
+                                <div class="book-thoughts">
+                                    <h3 class="thoughts-title">My Thoughts</h3>
+                                    <p class="thoughts-content">${book.thoughts}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+                modal.classList.add('active');
+            }
+        }
+
+        // Initialize the bookshelf
+        document.addEventListener('DOMContentLoaded', () => {
+            new BookshelfWidget();
+        });
+    </script>
 </body>
 </html>
