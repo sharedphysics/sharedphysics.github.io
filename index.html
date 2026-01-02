@@ -107,6 +107,8 @@
             font-weight: 600;
             transition: all 0.2s;
             font-family: inherit;
+            color: #1a1a1a;
+            text-decoration: none;
         }
 
         .toggle-btn:hover {
@@ -325,12 +327,11 @@
             bottom: -50px;
             left: 50%;
             transform: translateX(-50%) rotate(-45deg);
-            transform-origin: center;
+            transform-origin: left center;
             font-size: 0.7rem;
             font-weight: 600;
             color: #1a1a1a;
             white-space: nowrap;
-            text-align: left;
         }
 
         .bar-count {
@@ -524,6 +525,11 @@
         }
 
         @media (max-width: 768px) {
+            .metrics-counts {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+
             .chart-container {
                 grid-template-columns: 1fr;
             }
@@ -533,7 +539,7 @@
             }
 
             .metric-value {
-                font-size: 2.5rem;
+                font-size: 1.75rem;
             }
 
             .extremes-grid {
@@ -544,6 +550,17 @@
             .library-controls {
                 grid-template-columns: 1fr;
                 gap: 16px;
+            }
+
+            .bookshelf-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+                padding: 16px;
+            }
+
+            .grid-book-cover,
+            .grid-book-cover-placeholder {
+                height: 180px;
             }
         }
 
@@ -1536,22 +1553,10 @@
                                 </div>
                             </div>
                         ` : ''}
-                        ${recommendedBooks.length > 0 ? `
-                            <div class="chart" style="grid-column: 1 / -1;">
-                                <div class="chart-title">Recommended Reads</div>
-                                <div class="recommended-list">
-                                    ${recommendedBooks.slice(0, 5).map(book => `
-                                        <div class="recommended-item">
-                                            <div>
-                                                <div class="recommended-title">${book.title}</div>
-                                                <div class="recommended-author">${book.author}</div>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                    ${recommendedBooks.length > 5 ? `<div class="extreme-meta" style="padding: 8px 16px;">...and ${recommendedBooks.length - 5} more</div>` : ''}
-                                </div>
-                            </div>
-                        ` : ''}
+                        <div class="metric-card" style="grid-column: 1 / -1;">
+                            <div class="metric-label">Recommended Books</div>
+                            <div class="metric-value">${recommendedCount}</div>
+                        </div>
                     </div>
                 `;
 
